@@ -1,6 +1,7 @@
 #ifndef _CONTACTS_
 #define _CONTACTS_
 
+#include <cmath>
 #include <iostream>
 
 #include <algorithm>
@@ -12,7 +13,6 @@
 
 class trie
 {
-public:
 	class node;
 	typedef node* node_ptr;
 
@@ -22,14 +22,14 @@ public:
 		friend class trie;
 
 		node():
-			node(0, 0, nullptr) {}
+			node(0, 0, nullptr, 0) {}
 		node(char c):
-			node(c, 0, nullptr) {}
+			node(c, 0, nullptr, 0) {}
 		node(const std::string& s):
-			node(s.begin(), s.end(), 0, nullptr) {}
+			node(s.begin(), s.end(), 0, nullptr, 0) {}
 		template<class InputIt>
 		node(InputIt first, InputIt last):
-			node(first, last, 0, nullptr) {}
+			node(first, last, 0, nullptr, (((first + 1) == last) ? (1) : (0)) ) {}
 
 		inline char key() const { return _key; }
 		inline int depth() const { return _depth; }
@@ -43,7 +43,7 @@ public:
 			auto found = child_exists(c);
 			if(!(found.second))
 			{
-				node_ptr n = new node(c, _depth + 1, this);
+				node_ptr n = new node(c, _depth + 1, this, 0);
 				_children.push_back(n);
 				return n;
 			}
@@ -53,18 +53,19 @@ public:
 		template<class InputIt>
 		node_ptr create_child(InputIt first, InputIt last)
 		{
-			if()
-			if(_children.size() > 0){
-				auto t = child_exists(*first);
-				if(t.second)
-				{
-					(t.first)->create_child(++first, last);
-					return t.first;
-			}}
+			if(first != last && *first){
+				if(_children.size() > 0){
+					auto t = child_exists(*first);
+					if(t.second)
+					{
+						(t.first)->create_child(++first, last);
+						return t.first;
+				}}
 
-			node_ptr n = new node(first, last, _depth + 1, this);
-			_children.push_back(n);
-			return n;
+				node_ptr n = new node(first, last, _depth + 1, this, (((first + 1) == last) ? (1) : (0)));
+				_children.push_back(n);
+				return n;
+			}
 		}
 
 		std::pair<node_ptr, bool> child_exists(char c)
@@ -80,11 +81,11 @@ public:
 			_key(c), _depth(d), _parent(p), _is_keyword(is), _fail(nullptr) {}
 		template<class InputIt>
 		node(InputIt first, InputIt last, int d, node_ptr p, bool is):
-			_key( (*first) ? (*first) : (throw std::invalid_argument("Iterator does not reference a valid character.") ) ), _depth(d), _parent(p), _is_keyword(is), fail(nullptr)
+			_key( (*first) ? (*first) : (throw std::invalid_argument("Iterator does not reference a valid character." + std::to_string((char)(p->_key))) ) ), _depth(d), _parent(p), _is_keyword(is), _fail(nullptr)
 		{
 			if( (*(++first)) && (first <= last) )
 			{
-				node_ptr n = new node(first, last, _depth + 1, this);
+				node_ptr n = new node(first, last, _depth + 1, this, (((first + 1) == last) ? (1) : (0)) );
 				_children.push_back(n);
 			}
 		}
@@ -92,10 +93,10 @@ public:
 		const bool _is_keyword;
 		const char _key;
 		const int _depth;
+		
 		node_ptr _parent;
-
-		std::vector<node_ptr> _children;
 		node_ptr _fail;
+		std::vector<node_ptr> _children;
 	};
 
 public:
@@ -110,7 +111,7 @@ public:
 	trie(InputIt first, InputIt last):
 		_root(new node()), _keyword_count(last - first), _longest(0)
 	{
-		while(first < last)
+		while(first != last)
 		{
 			if(first->size() > _longest) _longest = first->size();
 			_root->create_child(first->begin(), first->end());
@@ -139,11 +140,13 @@ public:
 private:
 	void calculate_fail()
 	{
-		std::unordered_map<char, node_ptr> found;
-
+		std::map<char, node_ptr> found;
 		node_ptr current = _root;
 
+		for(auto i : _root->_children)
+			i->_fail = _root;
 
+		
 	}
 
 	void delete_recursive(node_ptr root)
