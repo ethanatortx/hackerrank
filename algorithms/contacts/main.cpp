@@ -16,6 +16,8 @@ int main()
 	};
 
 	auto t = trie(svec);
+
+	t.calculate_fail();
 /*	
 	std::vector<std::vector<char> > v(t._longest + 1, std::vector<char>(t._keyword_count));
 	print(t._root, v, 0, 0);

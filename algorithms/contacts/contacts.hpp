@@ -76,7 +76,7 @@ class trie
 			return std::make_pair(*f, f != _children.end());
 		}
 
-	private:
+	//private:
 		node(char c, int d, node_ptr p, bool is):
 			_key(c), _depth(d), _parent(p), _is_keyword(is), _fail(nullptr) {}
 		template<class InputIt>
@@ -137,16 +137,31 @@ public:
 
 	~trie() { delete_recursive(_root); }
 
-private:
+//private:
 	void calculate_fail()
 	{
-		std::map<char, node_ptr> found;
-		node_ptr current = _root;
-
 		for(auto i : _root->_children)
 			i->_fail = _root;
+		for(auto i : _root->_children)
+			calculate_fail(i);
+	}
 
-		
+	void calculate_fail(node_ptr root)
+	{
+		node_ptr current = root->_parent;
+
+		while(current != nullptr)
+		{
+			current = current->_fail;
+			auto check = current->child_exists(root->_key);
+			if(check.second)
+				root->_fail = check.first;
+		}
+
+		for(auto i : root->_children)
+		{
+			calculate_fail(i);
+		}
 	}
 
 	void delete_recursive(node_ptr root)
